@@ -1,3 +1,4 @@
+import base64
 import os
 import subprocess
 from pathlib import Path
@@ -7,11 +8,16 @@ from typing import Dict, Optional, Tuple
 class GitManager:
     def __init__(self, token: str = ""):
         self.token = token.strip()
+        self._auth_args = []
+        if self.token:
+            # GitHub Git HTTP Basic Auth base64(x-access-token:<token>) formatını gerektirir.
+            # Düz token veya 'basic <raw_token>' gönderilmesi GitHub tarafından HTTP 400 ile reddedilir.
+            b64_creds = base64.b64encode(f"x-access-token:{self.token}".encode("utf-8")).decode("ascii")
+            self._auth_args = ["-c", f"http.extraHeader=AUTHORIZATION: basic {b64_creds}"]
 
     def _run_git(self, args: list, cwd: Path, timeout: int = 45) -> Tuple[int, str, str]:
         """Git komutunu çalıştırır ve (exit_code, stdout, stderr) döndürür."""
         try:
-            # Token yetkilendirmesi için gerekiyorsa http.extraHeader eklenebilir
             env = os.environ.copy()
             # Windows UTF-8 desteği
             env["PYTHONIOENCODING"] = "utf-8"
@@ -57,12 +63,7 @@ class GitManager:
 
     def fetch_remote(self, repo_path: Path) -> Tuple[bool, str]:
         """Uzak depodan (origin) son commit bilgilerini çeker."""
-        args = ["fetch", "origin", "--quiet"]
-        # Token varsa auth header ekle
-        if self.token:
-            auth_header = f"http.extraHeader=AUTHORIZATION: basic {self.token}"
-            args = ["-c", auth_header] + args
-
+        args = list(self._auth_args) + ["fetch", "origin", "--quiet"]
         code, _, err = self._run_git(args, cwd=repo_path, timeout=30)
         if code != 0:
             return False, err or "Fetch başarısız oldu."
@@ -149,11 +150,7 @@ class GitManager:
         # 1. Güncelleme öncesi .env dosyalarını yedekle
         env_backups = backup_env_files(repo_path)
 
-        args = ["pull", "--ff-only"]
-        if self.token:
-            auth_header = f"http.extraHeader=AUTHORIZATION: basic {self.token}"
-            args = ["-c", auth_header] + args
-
+        args = list(self._auth_args) + ["pull", "--ff-only"]
         code, out, err = self._run_git(args, cwd=repo_path, timeout=60)
         pull_ok = False
         pull_msg = ""
@@ -163,9 +160,7 @@ class GitManager:
             pull_msg = out or "Başarıyla güncellendi."
         else:
             # ff-only başarısız olduysa normal pull dene
-            args2 = ["pull"]
-            if self.token:
-                args2 = ["-c", f"http.extraHeader=AUTHORIZATION: basic {self.token}"] + args2
+            args2 = list(self._auth_args) + ["pull"]
             code2, out2, err2 = self._run_git(args2, cwd=repo_path, timeout=60)
             if code2 == 0:
                 pull_ok = True
@@ -182,31 +177,24 @@ class GitManager:
     def clone_repo(self, clone_url: str, target_dir: Path) -> Tuple[bool, str]:
         """
         Depoyu hedeflenen klasöre klonlar.
-        Private repolar için token'ı güvenli şekilde url'e yerleştirir.
+        Auth header kullanarak token'ın config ve URL içinde açık kalmasını önler.
         """
         target_dir.parent.mkdir(parents=True, exist_ok=True)
 
-        url_to_use = clone_url
-        if self.token and clone_url.startswith("https://"):
-            # https://TOKEN@github.com/owner/repo.git
-            clean_url = clone_url.replace("https://", "")
-            url_to_use = f"https://{self.token}@{clean_url}"
+        cmd = ["git"] + list(self._auth_args) + ["clone", clone_url, str(target_dir)]
 
         try:
             result = subprocess.run(
-                ["git", "clone", url_to_use, str(target_dir)],
+                cmd,
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
                 errors="replace",
-                timeout=180
+                timeout=180,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
             )
 
-            # Token'ın .git/config içinde açık metin kalmaması için remote URL'i temiz URL ile değiştir
-            if result.returncode == 0 and self.token:
-                self._run_git(["remote", "set-url", "origin", clone_url], cwd=target_dir)
-                return True, "Klonlama başarılı."
-            elif result.returncode == 0:
+            if result.returncode == 0:
                 return True, "Klonlama başarılı."
             else:
                 # Hata mesajından token'ı temizle
@@ -217,3 +205,4 @@ class GitManager:
             return False, "Klonlama işlemi zaman aşımına uğradı."
         except Exception as e:
             return False, str(e)
+

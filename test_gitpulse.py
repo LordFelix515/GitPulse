@@ -112,14 +112,25 @@ class TestGitPulseLogic(unittest.TestCase):
 
             # Geri yükle
             restored = restore_env_files(test_repo, backups)
-            self.assertEqual(len(restored), 2)
-            self.assertTrue(root_env.exists())
-            self.assertTrue(nested_env.exists())
+            self.assertEqual(restored, [".env", "server\\.env.local"] if os.name == "nt" else [".env", "server/.env.local"])
             self.assertEqual(root_env.read_text(encoding="utf-8"), "DB_PASS=secret123\nAPI_KEY=xyz")
             self.assertEqual(nested_env.read_text(encoding="utf-8"), "PORT=3000")
         finally:
             shutil.rmtree(test_repo, ignore_errors=True)
 
+    def test_git_manager_auth_header(self):
+        import base64
+        from git_manager import GitManager
+
+        gm_empty = GitManager()
+        self.assertEqual(gm_empty._auth_args, [])
+
+        test_token = "ghp_1234567890abcdef"
+        gm = GitManager(test_token)
+        expected_b64 = base64.b64encode(f"x-access-token:{test_token}".encode("utf-8")).decode("ascii")
+        self.assertEqual(gm._auth_args, ["-c", f"http.extraHeader=AUTHORIZATION: basic {expected_b64}"])
+
 
 if __name__ == "__main__":
     unittest.main()
+
