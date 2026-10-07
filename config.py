@@ -80,7 +80,7 @@ def setup_interactive(force: bool = False) -> dict:
     # Varsayılan yerel kod klasörü (bir üst dizin veya kullanıcı klasörü)
     default_dir = config.get("local_repos_dir")
     if not default_dir:
-        # AutoGithub'ın bulunduğu bir üst dizin (örneğin C:\Users\Administrator\Desktop\code)
+        # GitPulse'ın bulunduğu bir üst dizin (örneğin C:\Users\Administrator\Desktop\code)
         parent_dir = str(get_base_dir().parent)
         default_dir = parent_dir
 

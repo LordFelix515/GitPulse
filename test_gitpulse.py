@@ -9,7 +9,7 @@ import ignore_manager
 from startup_manager import get_windows_startup_dir
 
 
-class TestAutoGithubLogic(unittest.TestCase):
+class TestGitPulseLogic(unittest.TestCase):
     def test_parse_user_selection_single_download(self):
         action, indices = parse_user_selection("1", 5)
         self.assertEqual(action, "download")

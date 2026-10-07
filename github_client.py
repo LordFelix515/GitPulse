@@ -11,7 +11,7 @@ class GitHubClient:
         self.session = requests.Session()
         self.session.headers.update({
             "Accept": "application/vnd.github.v3+json",
-            "User-Agent": "AutoGithub-Client/1.0",
+            "User-Agent": "GitPulse-Client/1.0",
         })
         if self.token:
             self.session.headers.update({

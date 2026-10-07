@@ -77,7 +77,7 @@ def add_to_ignore(repo_names: List[str]) -> List[str]:
         needs_header = not path.exists() or path.stat().st_size == 0
         with open(path, "a", encoding="utf-8") as f:
             if needs_header:
-                f.write("# AutoGithub dwnignore Listesi\n")
+                f.write("# GitPulse dwnignore Listesi\n")
                 f.write("# Bu listedeki projeler otomatik indirilmez ve sorulmaz.\n\n")
             for item in to_write:
                 f.write(f"{item}\n")
