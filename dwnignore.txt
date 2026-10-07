@@ -1,0 +1,6 @@
+# AutoGithub dwnignore Listesi
+# Bu dosyaya eklenen projeler bilgisayar açılışında sorulmaz ve indirilmez.
+# Bir projeyi ignore listesinden çıkarmak için bu dosyadan silebilir veya:
+# python autogithub.py --unignore <proje_adi> komutunu kullanabilirsiniz.
+UniyFpsCounter
+Unity-Basic-Fps-Controller

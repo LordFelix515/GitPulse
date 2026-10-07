@@ -1,0 +1,8 @@
+{
+    "github_token": "ghp_YourPersonalAccessTokenHere",
+    "local_repos_dir": "C:\\Users\\Administrator\\Desktop\\code",
+    "auto_pull_existing": true,
+    "include_forks": true,
+    "include_archived": false,
+    "startup_countdown_seconds": 10
+}

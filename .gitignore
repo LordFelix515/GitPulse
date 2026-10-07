@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local environment & secret tokens (NEVER COMMIT)
+config.json
+.env
+.env.*
+*.env
+*.local
+
+# Internal technical documentation
+ASD_STE100_PROJE_DOKUMANI.md
+
+# Logs
+*.log
