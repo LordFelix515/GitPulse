@@ -12,6 +12,6 @@ config.json
 
 # Internal technical documentation
 ASD_STE100_PROJE_DOKUMANI.md
-
+implement_plan.txt
 # Logs
 *.log
